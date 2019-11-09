@@ -1,0 +1,3 @@
+package supervision
+
+trait Jitter
