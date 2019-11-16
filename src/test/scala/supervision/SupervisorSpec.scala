@@ -4,7 +4,7 @@ import org.scalatest._
 
 class SupervisorSpec extends FlatSpec with Logging {
 
-  "Default Supervisor" should "match default values" in {
+  "Supervisor" should "match default values" in {
 
     trait MyService extends Service[String]
 

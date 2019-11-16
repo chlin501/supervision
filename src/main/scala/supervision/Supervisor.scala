@@ -1,6 +1,6 @@
 package supervision
 
-import zio.{Queue, Task}
+import zio.{Queue, Task, ZIO}
 
 import scala.util.Random
 
@@ -14,7 +14,7 @@ trait Supervisor[S] {
 
   def withService(service: S): Supervisor[S]
 
-  def start(): Either[Throwable, Supervisor[S]]
+  def start(): Task[Supervisor[S]]
 }
 
 object Supervisor {
@@ -100,11 +100,11 @@ object Supervisor {
         restartQueue.enqueue(service.id)
       )
 
-    def start(): Either[Throwable, Supervisor[S]] = supervisorState match {
-      case Stopped => Right(supervisor[S](
+    def start(): Task[Supervisor[S]] = supervisorState match {
+      case Stopped => Task(supervisor[S](
         supervisorName,
         spec,
-        supervisorState,
+        Running,
         services.map { case (id, service) =>
           service.start()
           (id, service)
@@ -117,9 +117,9 @@ object Supervisor {
           }).fork
         } yield q)
       ))
-      case Running => Right(this)
-      case Terminated(id) => Left(SupervisorTerminated(Terminated(id)))
-      case Paused => Right(this) // TODO:
+      case Running => Task(this)
+      case Terminated(id) => ZIO.fail(SupervisorTerminated(Terminated(id)))
+      case Paused => Task(this) // TODO:
     }
   }
 }
