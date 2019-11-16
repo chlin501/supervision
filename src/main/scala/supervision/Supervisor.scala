@@ -1,7 +1,7 @@
 package supervision
 
-import zio.Queue
-import zio.UIO
+import zio.{Queue, Task}
+
 import scala.util.Random
 
 trait Supervisor[S] {
@@ -29,14 +29,16 @@ object Supervisor {
   protected[supervision] case object Paused extends State
   protected[supervision] case class Terminated(id: Identifier) extends State
 
-  protected[supervision] case class InternalQueue[T](queue: UIO[Queue[T]] = Queue.unbounded[T]) {
+  protected[supervision] case class InternalQueue[T](
+    queue: Task[Queue[T]] = Queue.unbounded[T]
+  ) {
 
     def enqueue(data: T): InternalQueue[T] = InternalQueue(for {
       q <- queue
       _ <- q.offer(data)
     } yield q)
 
-    def dequeue(): UIO[T] = for {
+    def dequeue(): Task[T] = for {
       q <- queue
       v <- q.take
     } yield v
@@ -50,13 +52,30 @@ object Supervisor {
     services: Map[Identifier, S] = Map.empty[Identifier, S],
     offlineServices: Map[Identifier, S] = Map.empty[Identifier, S],
     restartQueue: InternalQueue[Identifier] = InternalQueue[Identifier]()
-  )(
-    implicit s: (String, Spec, State, Map[Identifier, S], Map[Identifier, S], InternalQueue[Identifier]) => Supervisor[S]
-  ): Supervisor[S] = s(supervisorName, spec, supervisorState, services, offlineServices, restartQueue)
+  )(implicit implicitInstance: (
+    String,
+    Spec,
+    State,
+    Map[Identifier, S],
+    Map[Identifier, S],
+    InternalQueue[Identifier]
+  ) => Supervisor[S]): Supervisor[S] = implicitInstance (
+    supervisorName,
+    spec,
+    supervisorState,
+    services,
+    offlineServices,
+    restartQueue
+  )
 
-  implicit def supervisor[S <: Service[_]]:
-    (String, Spec, State, Map[Identifier, S], Map[Identifier, S], InternalQueue[Identifier]) => Supervisor[S] =
-  (
+  implicit def supervisor[S <: Service[_]]: (
+    String,
+    Spec,
+    State,
+    Map[Identifier, S],
+    Map[Identifier, S],
+    InternalQueue[Identifier]
+  ) => Supervisor[S] = (
     supervisorName: String,
     spec: Spec,
     supervisorState: State,
@@ -91,13 +110,16 @@ object Supervisor {
           (id, service)
         },
         offlineServices,
-        restartQueue
+        InternalQueue(for {
+          q <- restartQueue.queue
+          _ <- Task(q.map { id =>
+            services.get(id).map(_.start())
+          }).fork
+        } yield q)
       ))
       case Running => Right(this)
       case Terminated(id) => Left(SupervisorTerminated(Terminated(id)))
       case Paused => Right(this) // TODO:
     }
-
   }
-
 }
