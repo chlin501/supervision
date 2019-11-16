@@ -4,7 +4,11 @@
 
 # TODO
 
-  * Too many
+  1. Integrate with ZIO stacks
+
+      * Add failure recovery
+
+  2. Integrate with network capability
 
 # References
 
