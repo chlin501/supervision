@@ -19,7 +19,9 @@ trait Supervisor[S] {
 
 object Supervisor {
 
-  case class SupervisorTerminated(terminated: Terminated) extends Throwable
+  case class SupervisorTerminated(terminated: Terminated) extends Throwable {
+    def id(): Identifier = terminated.id
+  }
 
   protected[supervision] sealed trait State
   protected[supervision] case object Stopped extends State
@@ -92,7 +94,7 @@ object Supervisor {
         restartQueue
       ))
       case Running => Right(this)
-      case Terminated(value) => Left(SupervisorTerminated(Terminated(value)))
+      case Terminated(id) => Left(SupervisorTerminated(Terminated(id)))
       case Paused => Right(this) // TODO:
     }
 
