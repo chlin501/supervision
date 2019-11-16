@@ -33,6 +33,11 @@ object Supervisor {
     queue: Task[Queue[T]] = Queue.unbounded[T]
   ) {
 
+    def runServices(f: Queue[T] => Unit): InternalQueue[T] = InternalQueue(for {
+      q <- queue
+      _ <- Task(f(q)).fork
+    } yield q)
+
     def enqueue(data: T): InternalQueue[T] = InternalQueue(for {
       q <- queue
       _ <- q.offer(data)
@@ -110,12 +115,9 @@ object Supervisor {
           (id, service)
         },
         offlineServices,
-        InternalQueue(for {
-          q <- restartQueue.queue
-          _ <- Task(q.map { id =>
-            services.get(id).map(_.start())
-          }).fork
-        } yield q)
+        restartQueue.runServices { queue => queue.map { id =>
+          services.get(id).map(_.start)
+        }}
       ))
       case Running => Task(this)
       case Terminated(id) => ZIO.fail(SupervisorTerminated(Terminated(id)))
