@@ -14,5 +14,11 @@ object Identifier {
 
   def create(value: String): Identifier = Identifier(hash(value))
 
+  implicit class IdOps(id: Identifier) {
+
+    def isEmpty: Boolean = null == id || id.value.isEmpty
+
+  }
+
 }
 protected[supervision] final case class Identifier(value: String)

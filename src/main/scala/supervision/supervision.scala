@@ -1,11 +1,16 @@
 package supervision
 
 import zio._
+import scala.util.Random
 
 package object supervision {
 
-  type S[A] = Service[A]
+  def randomString(size: Int = 10) = Random.alphanumeric.take(size).mkString("")
 
-  type FR[A] = URIO[Any, Fiber.Runtime[Throwable, A]]
+  implicit class StringOps(value: String) {
+
+    def isEmpty: Boolean = null == value || "".equals(value)
+
+  }
 
 }

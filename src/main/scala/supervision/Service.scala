@@ -1,38 +1,23 @@
 package supervision
 
 import zio._
-import supervision._
 
-trait Service[T] {
+trait Service[T[_]] {
 
-  def id(): Identifier
-
-  def start(): FR[T]
+  def run[I, O](in: I)(f: I => O): T[O]
 
 }
 
 object Service {
 
-  type AUX[T] = Task[T]
+  def apply[T[_]](implicit s: Service[T]): Service[T] = s
 
-  protected[supervision] sealed trait State
-  protected[supervision] case object Stopped extends State
-  protected[supervision] case object Running extends State
-  protected[supervision] case object Paused extends State
-  protected[supervision] case class Failed(throwable: Throwable) extends State
+  def zioRun[I, O, S[_]: Service](in: I)(f: I => O) = Service[S].run(in)(f)
 
-  def apply[T](implicit s: Service[T]): Service[T] = s
+  implicit val service = new Service[Task] {
 
-  implicit def service[T](
-      identifier: Identifier,
-      task: AUX[T]
-  ) =
-    new Service[T] {
+    override def run[I, O](in: I)(f: I => O): Task[O] = Task(f(in))
 
-      override def id(): Identifier = identifier
-
-      override def start(): FR[T] = task.fork
-
-    }
+  }
 
 }
