@@ -2,13 +2,9 @@
 
   * Porting [1] for fun.
 
-# TODO
+# Project
 
-  1. Integrate with ZIO stacks
-
-      * Add failure recovery
-
-  2. Integrate with network capability
+  * [Kanban board](https://github.com/users/chlin501/projects/1)
 
 # References
 
