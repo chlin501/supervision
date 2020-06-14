@@ -14,7 +14,7 @@ object Service {
 
   def zioRun[I, O, S[_]: Service](in: I)(f: I => O) = Service[S].run(in)(f)
 
-  implicit val service = new Service[Task] {
+  implicit val zioService = new Service[Task] {
 
     override def run[I, O](in: I)(f: I => O): Task[O] = Task(f(in))
 

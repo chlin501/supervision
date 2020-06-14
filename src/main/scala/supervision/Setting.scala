@@ -13,7 +13,7 @@ trait Setting[T] {
 
 object Setting {
 
-  def typesafe(basename: String = "application") =
+  def typesafe(basename: String = "supervision") =
     Typesafe(ConfigFactory.load(basename))
 
   protected[supervision] case class Typesafe(config: Config) extends Setting[Config] {
