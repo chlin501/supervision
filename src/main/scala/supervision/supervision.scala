@@ -1,11 +1,10 @@
 package supervision
 
 import zio._
-import scala.util.Random
 
 package object supervision {
 
-  def randomString(size: Int = 10) = Random.alphanumeric.take(size).mkString("")
+  type ServiceResult[O] = ZIO[Any, Throwable, O]
 
   implicit class StringOps(value: String) {
 

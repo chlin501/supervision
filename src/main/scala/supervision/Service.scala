@@ -4,20 +4,21 @@ import zio._
 
 trait Service[T[_]] {
 
-  def run[I, O](in: I)(f: I => O): T[O]
+  import supervision._
+
+  def run(): ServiceResult[_]
 
 }
+case class ZioService[I, O](in: I, f: I => O) extends Service[Task] {
 
-object Service {
+  import supervision._
 
-  def apply[T[_]](implicit s: Service[T]): Service[T] = s
+  protected[supervision] val task = Task(f(in))
 
-  def zioRun[I, O, S[_]: Service](in: I)(f: I => O) = Service[S].run(in)(f)
-
-  implicit val zioService = new Service[Task] {
-
-    override def run[I, O](in: I)(f: I => O): Task[O] = Task(f(in))
-
-  }
+  override def run(): ServiceResult[O] =
+    for {
+      t <- task.fork
+      value <- t.join
+    } yield value
 
 }
