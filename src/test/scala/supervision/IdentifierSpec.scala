@@ -1,13 +1,8 @@
 package supervision
 
-import org.scalatest._
-import Logging._
+class IdentifierSpec extends TestSpec {
 
-class IdentifierSpec extends FlatSpec {
-
-  val log = Logging()
-
-  "Identifier" should "produce id deterministically" in {
+  "Identifier" should "produce the same id" in {
     val name1 = "name1"
     val id1 = Identifier.create(name1)
     val id2 = Identifier.create("name1")

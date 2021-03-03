@@ -1,11 +1,8 @@
 package supervision
 
 import org.scalatest._
-import Logging._
 
-class SettingSpec extends FlatSpec {
-
-  val log = Logging()
+class SettingSpec extends TestSpec {
 
   "Setting" should "get set value" in {
     import Setting._
