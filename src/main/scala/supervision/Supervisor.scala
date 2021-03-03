@@ -34,7 +34,7 @@ object Supervisor {
     import Setting._
     import supervision._
 
-    protected[supervision] val config = typesafe()
+    protected[supervision] val config = Setting()
 
     protected[supervision] val queue = Queue.bounded[Service[Task]](
       requestedCapacity = config.get("supervision.supervisor.queue.size", 32)

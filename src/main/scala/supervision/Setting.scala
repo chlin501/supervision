@@ -13,19 +13,21 @@ trait Setting[T] {
 
 object Setting {
 
-  def typesafe(basename: String = "supervision") =
-    Typesafe(ConfigFactory.load(basename))
+  def apply[T: Setting](): Setting[T] = implicitly[Setting[T]]
 
-  protected[supervision] case class Typesafe(config: Config) extends Setting[Config] {
+  protected[supervision] case class Typesafe(config: Config)
+      extends Setting[Config] {
 
     override def get[A](key: String, default: A): A =
       Try(config.getAnyRef(key).asInstanceOf[A]).toOption match {
         case Some(value) => value
-        case None => default
+        case None        => default
       }
 
     override def set[A](key: String, default: A): Setting[Config] =
       Typesafe(config.withValue(key, ConfigValueFactory.fromAnyRef(default)))
 
   }
+
+  implicit val typesafe = Typesafe(ConfigFactory.load("supervision"))
 }
